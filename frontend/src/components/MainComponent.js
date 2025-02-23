@@ -37,6 +37,12 @@ function MainComponent() {
                 Health Tips
               </a>
               <a
+                href="/simulation"
+                className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-inter"
+              >
+                Profile
+              </a>
+              <a
                 href="/about"
                 className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-inter"
               >
@@ -98,9 +104,11 @@ function MainComponent() {
                 Advanced artificial intelligence technology to detect early
                 signs of disease through breath analysis
               </p>
+              <a href="/prediction">
               <button className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-8 py-3 rounded-md font-inter hover:bg-opacity-80 dark:hover:bg-opacity-80 transition-all">
                 Get Started
               </button>
+              </a>
             </div>
             <div className="md:w-1/2 mt-8 md:mt-0">
               <img

@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { jsPDF } from "jspdf";
 
 function Model() {
   const [formData, setFormData] = useState({
@@ -28,18 +29,6 @@ function Model() {
     carbon_monoxide: { min: 0, max: 100, unit: "ppm" },
     hydrogen: { min: 0, max: 100, unit: "ppm" },
     ethanol: { min: 0, max: 1000, unit: "ppb" },
-  };
-
-  const tooltips = {
-    acetone: "Elevated levels may indicate diabetes or ketosis",
-    nitric_oxide: "Important for respiratory health assessment",
-    isoprene: "Related to cholesterol synthesis",
-    ammonia: "Can indicate kidney or liver dysfunction",
-    methane: "Associated with gut microbiome activity",
-    hydrogen_sulfide: "May indicate bacterial growth",
-    carbon_monoxide: "Important for smoking-related conditions",
-    hydrogen: "Related to gut bacterial fermentation",
-    ethanol: "Can indicate yeast overgrowth or diabetes",
   };
 
   const handleInputChange = (e) => {
@@ -77,7 +66,7 @@ function Model() {
     setError(null);
 
     try {
-      const response = await fetch("/api/create-reading", {
+      const response = await fetch("http://127.0.0.1:5000/predict", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(
@@ -99,6 +88,19 @@ function Model() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const generatePDF = () => {
+    const doc = new jsPDF();
+    doc.setFont("helvetica", "bold");
+    doc.text("Disease Prediction Report", 20, 20);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Predicted Disease: ${result.disease}`, 20, 40);
+    doc.text("Biomarker Values:", 20, 60);
+    Object.entries(formData).forEach(([key, value], index) => {
+      doc.text(`${key.replace("_", " ")}: ${value} ${ranges[key].unit}`, 20, 70 + index * 10);
+    });
+    doc.save("Disease_Prediction_Report.pdf");
   };
 
   return (
@@ -123,9 +125,6 @@ function Model() {
                       key.slice(1).replace("_", " ")}
                     <span className="ml-1 text-gray-500">({range.unit})</span>
                   </label>
-                  <span title={tooltips[key]}>
-                    <i className="fas fa-info-circle ml-2 text-gray-400 cursor-help"></i>
-                  </span>
                   <input
                     type="number"
                     name={key}
@@ -149,39 +148,22 @@ function Model() {
             )}
 
             <div className="flex justify-center mt-6">
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-8 py-3 rounded-md font-inter hover:bg-opacity-80 dark:hover:bg-opacity-80 transition-all disabled:opacity-50"
-              >
-                {loading ? (
-                  <span className="flex items-center">
-                    <i className="fas fa-spinner fa-spin mr-2"></i>
-                    Processing...
-                  </span>
-                ) : (
-                  "Analyze Sample"
-                )}
+              <button type="submit" disabled={loading} className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-8 py-3 rounded-md font-inter">
+                {loading ? "Processing..." : "Analyze Sample"}
               </button>
             </div>
           </form>
         </div>
 
         {result && (
-          <div className="mt-8 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white font-inter mb-4">
-              Analysis Results
-            </h2>
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-              {result.prediction ? (
-                <p className="text-lg font-semibold text-green-600">
-                  Predicted Disease: {result.prediction}
-                </p>
-              ) : (
-                <pre className="text-sm text-gray-700 dark:text-gray-300 font-inter whitespace-pre-wrap">
-                  {JSON.stringify(result, null, 2)}
-                </pre>
-              )}
+          <div className="mt-12 flex flex-col items-center">
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {result.disease}
+            </div>
+            <div className="mt-6 flex space-x-4">
+              <button className="px-6 py-2 bg-blue-500 text-white rounded-lg">Recommendations</button>
+              <button className="px-6 py-2 bg-green-500 text-white rounded-lg">Chatbot</button>
+              <button onClick={generatePDF} className="px-6 py-2 bg-red-500 text-white rounded-lg">Download Report</button>
             </div>
           </div>
         )}

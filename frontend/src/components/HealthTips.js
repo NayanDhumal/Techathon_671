@@ -1,19 +1,27 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 function HealthTips() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [tips, setTips] = useState([]);
-  const [expandedCards, setExpandedCards] = useState(new Set());
+  const [recommendation, setRecommendation] = useState(null);
+  const [disease, setDisease] = useState("");
+  const [lifestyleFactors, setLifestyleFactors] = useState("");
 
-  const fetchHealthTips = async () => {
+  const fetchHealthTips = async (e) => {
+    e.preventDefault();
     setLoading(true);
     setError(null);
+    setRecommendation(null);
+
     try {
-      const response = await fetch("/api/get-health-tips", {
-        method: "GET",
+      const response = await fetch("http://127.0.0.1:5000/recommend", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          disease: disease,
+          lifestyle_factors: lifestyleFactors.split(",").map((f) => f.trim()),
+        }),
       });
 
       if (!response.ok) {
@@ -25,60 +33,13 @@ function HealthTips() {
         throw new Error(result.error);
       }
 
-      setTips(result);
-      setExpandedCards(new Set());
+      setRecommendation(result.recommendation);
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchHealthTips();
-  }, []);
-
-  const toggleCard = (index) => {
-    setExpandedCards((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(index)) {
-        newSet.delete(index);
-      } else {
-        newSet.add(index);
-      }
-      return newSet;
-    });
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-center">
-          <i className="fas fa-spinner fa-spin text-4xl text-gray-900 dark:text-white mb-4"></i>
-          <p className="text-gray-700 dark:text-gray-300 font-inter">
-            Loading health tips...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-white dark:bg-gray-900 p-8">
-        <div className="max-w-4xl mx-auto text-center">
-          <i className="fas fa-exclamation-circle text-4xl text-red-500 mb-4"></i>
-          <p className="text-gray-700 dark:text-gray-300 font-inter">{error}</p>
-          <button
-            onClick={fetchHealthTips}
-            className="mt-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-2 rounded-md font-inter"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
@@ -94,52 +55,63 @@ function HealthTips() {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white font-inter mb-4">
-            Health Tips
-          </h1>
-          <p className="text-xl text-gray-700 dark:text-gray-300 font-inter">
-            Stay healthy with these AI-generated wellness tips.
-          </p>
-        </div>
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white text-center mb-6">
+          Get Personalized Health Recommendations
+        </h1>
 
-        <div className="space-y-6">
-          {tips.map((tip, index) => (
-            <div
-              key={index}
-              className="bg-gray-100 dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transition-all duration-300"
-            >
-              <button
-                onClick={() => toggleCard(index)}
-                className="w-full text-left p-6 focus:outline-none"
-              >
-                <div className="flex justify-between items-center">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white font-inter">
-                    {tip.title}
-                  </h3>
-                  <i
-                    className={`fas fa-chevron-${expandedCards.has(index) ? "up" : "down"} text-gray-900 dark:text-white transition-transform duration-300`}
-                  ></i>
-                </div>
-              </button>
-              <div className={`px-6 pb-6 ${expandedCards.has(index) ? "block" : "hidden"}`}>
-                <p className="text-gray-900 dark:text-white font-inter mb-4">
-                  {tip.description}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
+        <form onSubmit={fetchHealthTips} className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg shadow-lg space-y-4">
+          <div>
+            <label className="block text-gray-900 dark:text-white font-medium">Disease</label>
+            <input
+              type="text"
+              value={disease}
+              onChange={(e) => setDisease(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              placeholder="Enter disease name (e.g., Diabetes, Asthma)"
+              required
+            />
+          </div>
 
-        <div className="mt-8 text-center">
+          <div>
+            <label className="block text-gray-900 dark:text-white font-medium">Lifestyle Factors</label>
+            <input
+              type="text"
+              value={lifestyleFactors}
+              onChange={(e) => setLifestyleFactors(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              placeholder="Enter lifestyle factors (e.g., Sedentary, High Sugar Intake)"
+              required
+            />
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+              Enter multiple factors separated by commas.
+            </p>
+          </div>
+
           <button
-            onClick={fetchHealthTips}
-            className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-8 py-3 rounded-md font-inter hover:bg-opacity-80 dark:hover:bg-opacity-80 transition-all"
+            type="submit"
+            className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-6 py-3 rounded-lg font-semibold hover:bg-opacity-80 transition-all"
           >
-            Refresh Tips
+            {loading ? "Generating..." : "Get Recommendations"}
           </button>
-        </div>
+        </form>
+
+        {error && (
+          <p className="mt-4 text-center text-red-500">
+            <i className="fas fa-exclamation-circle"></i> {error}
+          </p>
+        )}
+
+        {recommendation && (
+          <div className="mt-6 bg-green-100 dark:bg-green-800 p-6 rounded-lg shadow-lg">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Your Personalized Health Plan</h2>
+            <ul className="list-disc list-inside text-gray-900 dark:text-white space-y-2">
+            {recommendation.split("\n").map((point, index) => (
+                <li key={index}>{point.replace("•", "").trim()}</li>
+            ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );
