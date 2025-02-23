@@ -1,0 +1,33 @@
+## import librariess
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+# Load dataset
+
+df = pd.read_csv("aissms_final.csv")
+df.head()
+df.shape
+df.info()
+df.isnull().sum()
+df["Disease_Label"].value_counts()
+df['Disease_Label'].unique()
+# Split into features & labels
+X = df.drop(columns=["Disease_Label"])  # Features
+y = df["Disease_Label"]  # Target
+# Train-test split
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
+# Train model
+from sklearn.ensemble import RandomForestClassifier
+model = RandomForestClassifier(n_estimators=400, random_state=42)
+model.fit(X_train, y_train)
+
+# Evaluate accuracy
+
+from sklearn.metrics import accuracy_score
+y_pred = model.predict(X_test)
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Model Accuracy: {accuracy:.2f}")
+model.predict([[1,2.13,18.64,83.31,1.16,1.89,3.42,1.45,8.01,27.12]])
+import pickle
+pickle.dump(model,open('model_last.pkl','wb'))
